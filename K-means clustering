@@ -1,0 +1,100 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Thu Feb 16 14:12:44 2017
+
+@author: Tejal
+"""
+
+import random as rd
+
+f_path = raw_input('Enter datafile path:')
+data = open(f_path)
+k =3
+c1 = []
+c2 =[]
+c3=[]
+
+# Read data into list
+mainlist=[list(map(float,x.split(","))) for x in data]
+          
+# Assign random centroids
+def int_centroid():
+    init_centroidlist = []
+    for i in range(k):
+        init_centroidlist.append(rd.choice(mainlist))
+    return (init_centroidlist)   
+
+
+# calculated the distance between the centroid and the input_points
+def cal_distance(input_centroid,input_list):
+    temp2=[]
+    l=[]
+    new_list=[]
+    for i in input_list:
+        for j in input_centroid:
+            x=((i[0]-j[0])**2)
+            y=((i[1]-j[1])**2)              
+            temp2.append(x+y) # calculated the distance between the centroid and the mainlist. 
+        l.append(temp2) #the first element in the list distance is calculated first and so on
+        temp2=[]
+    for i in l:
+        new_list.append(i.index(min(i)))
+    return new_list    
+
+#assign the centroid to the coordinates
+def assign_centroid(list_indi,input_list): 
+    sumx=0
+    sumy=0
+    suma=0
+    sumb=0
+    sumc=0
+    sumd=0
+    mid_centroid1 = []
+    for j,k in enumerate(input_list):
+        if(list_indi[j]==0):
+            c1.append(k)
+        elif(list_indi[j]==1):
+            c2.append(k)
+        else:
+            c3.append(k)
+#This is to find the new centroid-1
+    for i in c1:      
+        suma+= i[0]
+        sumb+= i[1]
+    avga=float("{0:.9f}".format(suma/float(len(c1))))
+    avgb=float("{0:.9f}".format(sumb/float(len(c1))))
+    cal_centroid1=[avga,avgb]
+
+#This is to find the new centroid-2
+    mid_centroid1.append(cal_centroid1)
+    for i in c2:    
+        sumc+= i[0]
+        sumd+=i[1]
+    avgc=float("{0:.9f}".format(sumc/float(len(c2))))
+    avgd=float("{0:.9f}".format(sumd/float(len(c2))))
+    cal_centroid2=[avgc,avgd]    
+    
+#This is to find the new centroid-3
+    mid_centroid1.append(cal_centroid2)
+    for i in c3:
+        sumx+=i[0]
+        sumy+=i[1]
+    avgx=float("{0:.9f}".format(sumx/float(len(c3))))
+    avgy=float("{0:.9f}".format(sumy/float(len(c3))))
+    cal_centroid3=[avgx,avgy]
+    mid_centroid1.append(cal_centroid3)   #the new centroid
+    return mid_centroid1    
+       
+prev_cen = []    
+for j in range(70):
+    if(j==0):
+        center=int_centroid()
+    dis=cal_distance(center,mainlist)
+    return_centroid=assign_centroid(dis,mainlist)
+    center=return_centroid
+    if(return_centroid==prev_cen):
+        break
+    else:
+        prev_cen=return_centroid
+
+print('The points converge at centroids',return_centroid)
