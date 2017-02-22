@@ -1,0 +1,136 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Sun Feb 12 10:41:24 2017
+
+@author: Tejal
+"""
+
+from sklearn.cluster import KMeans
+import numpy as np
+import math
+
+f_path = raw_input('Enter file path : ')
+data1 = np.genfromtxt(f_path,delimiter=",")
+print('Data loaded. Calculating GMM curves....')
+k = 3
+    
+# Calculate initial model parameters using kmeans cluster
+def initial_estep():
+    sub_data=[]
+    ind_list =[]
+    temp =[]
+    covar=[]
+    amp = []
+    mod_param = {}
+# Intial clusters using kmeans    
+    kmeans = KMeans(n_clusters=3, random_state=0).fit(data1)
+
+# Mean of the model    
+    mod_param['m']=list(list(cen) for cen in kmeans.cluster_centers_)
+    
+# Create subsets of data based on cluster
+    for w in range(k):
+        ind = [i for i, x in enumerate(kmeans.labels_) if x == w]
+        sub = [data1[i] for i in ind]
+        sub_data.append(sub)
+        ind_list.append(ind)
+        
+# calculate covar matrix        
+        for k1,j1 in enumerate(sub):
+            x_diff = np.matrix(np.matrix(j1).T - np.matrix(mod_param['m'][w]).T)
+            t = np.matmul(x_diff,x_diff.T)
+            temp.append(t)
+        covar.append(sum(temp)/len(sub)*1.0)
+        del temp[:] 
+
+# Calculate amplitude
+        amp.append(len(sub)/float(len(data1)))
+    mod_param['covar'] = covar
+    mod_param['amp'] = amp
+    return(mod_param)
+    
+
+# Estep - Calculate model parameters based on wt of each data point in each cluster    
+def estep(l) :
+    amp= []
+    m = []
+    covar = []
+    mod_param = {}
+    temp =[] 
+  
+# Calculate model parameters 
+
+    for i in range(k):
+# To extract the ric for each cluster from deep list for each data point
+        a = [round(j[i+2],8) for j in l]
+             
+# Calculate amplitude             
+        amp.append(round(np.mean(a),8))
+        
+# Calculate mean
+        m.append(list(np.average(data1,axis=0,weights=a)))
+        
+# Calculate covariance matrix
+        for k1,j1 in enumerate(data1):
+            x_diff = np.matrix(np.matrix(j1).T - np.matrix(m[i]).T)
+            t = a[k1]*np.matmul(x_diff,x_diff.T)
+            temp.append(t)
+        covar.append(sum(temp)/sum(a)*1.0)
+        del temp[:]
+          
+    mod_param['amp']=amp
+    mod_param['m']=m
+    mod_param['covar']=covar
+    return(mod_param)
+
+def calc_N(x, mean, covar):
+    denom_constant = 1.0/ ( math.pow((2*math.pi),float(2)/2) * math.pow(np.linalg.det(covar),1.0/2) )
+    x_mean_diff = np.matrix(x - mean)
+    inv = covar.I 
+    expValue = float("{0:.5f}".format(math.pow(math.e, -0.5 *(np.matmul(x_mean_diff.T,np.matmul(inv,x_mean_diff))))))
+    return float("{0:.5f}".format(denom_constant * expValue))
+
+# Calculate weight of each point in each cluster
+    
+def mstep(mod_param):
+    gaussDist=[]
+    localList = []
+
+# For each data point Cal the 3 probabilities 
+    for point in data1:
+        i = 0
+        while i in range(k): 
+# Data read is in Nxd dimension. So, matrix transpose is made to put them in correct form          
+            gauss = calc_N(np.matrix(point).T, np.matrix(mod_param['m'][i]).T, np.matrix(mod_param['covar'][i])) 
+# Multiply the guassian value with the amplitude of that cluster             
+            localList.insert(i, float("{0:.5f}".format(mod_param['amp'][i] * gauss))) 
+            i+=1
+        sum_gauss = sum(localList)
+        
+# Find out the weight of data point x[i] in each cluster = Ric
+        ric = [float("{0:.5f}".format(x/float(sum_gauss))) for x in localList]
+
+# create list with data point and its wt for each cluster               
+        gaussDist.append(list(point)+list(ric))
+        del localList[:]
+        del ric[:]
+
+    return(gaussDist)    
+
+prev_mean=[]
+amp=[]
+mod_param= initial_estep()
+l = mstep(mod_param)
+mod_param_max = {}
+loops = 1
+while(loops < 500):
+    loops+=1
+    if (prev_mean==list(mod_param['m']) and amp == list(mod_param['amp'])):
+        break
+    prev_mean = list(mod_param['m'])
+    amp = list(mod_param['amp'])
+    mod_param = estep(l)
+    l = mstep(mod_param)
+print('GMM Amplitudes = %s'%mod_param['amp'])
+print('\nGMM Means = %s'%mod_param['m'])
+print('\nGMM Covariance matrices = %s'%mod_param['covar'])
