@@ -1,0 +1,38 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Fri Feb 24 18:22:44 2017
+
+@author: Tejal
+"""
+import numpy as np
+
+#data = np.genfromtxt('C:\Users\Tejal\Documents\Tejal\College\INF552\HW3\PCA_data.csv',delimiter=',')
+file_path = raw_input("Enter file path : ")
+data = np.genfromtxt(file_path,delimiter=',')
+
+# Dimensionality to which data should be reduced to
+red_dim = 2
+Z=[]
+# Normalize the data
+m_data = np.average(data,axis=0)
+nor_data = np.subtract(data,m_data)
+
+#Calculate covariance matrix
+cov_mat = np.cov(nor_data.T,ddof=0)
+
+# identify eigen value and vector
+eig_val,eig_vector = np.linalg.eig(cov_mat)
+U_trunc = eig_vector[:,0:red_dim]
+
+# The dimensionality reduced data
+for i in data:
+    Z.append(np.dot(U_trunc.T,i.T))
+print("\nEigen values -")
+print(eig_val[0:red_dim])
+for j in range(len(U_trunc.T)):
+    print("\nPrinciple component %d: %s"%(j+1, U_trunc.T[j]))
+print("\nCo-ordinates of data points after dimensionality reduction-")
+print(np.array(Z))
+
+    
+     
