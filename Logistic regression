@@ -1,0 +1,83 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Thu Mar 16 22:51:32 2017
+
+@author: Tejal
+"""
+
+import numpy as np
+import math
+
+def compute_cost(wts):
+    cost = 0.0
+    for i in data:
+        v1 = 1/float((1+math.exp(-(i[data.shape[1]-1]*(np.dot(wts,i[0:data.shape[1]-1]))))))
+        cost += math.log(v1,10)
+    return(-1*cost/data.shape[0])
+    
+#Derivative of cost function    
+def der_costfn(wts):
+    sum_der = 0
+    for i in data:
+        v1 = i[data.shape[1]-1]*i[0:data.shape[1]-1]/(1+math.exp(i[data.shape[1]-1]*np.dot(wts,i[0:data.shape[1]-1])))
+        sum_der += v1
+    return sum_der
+    
+def min_costfn1(n_iter,alpha):  
+    wts = np.zeros(data.shape[1]-1)
+    cost_val = compute_cost(wts)
+    old_cost = cost_val 
+    cost_diff = 1.0
+    j=1
+    acc = entire_predict(wts)
+    print ("In iteration: %d - accuracy = %f " %(j,acc))
+    
+#   Compute weights till 7000 iterations even if cost does not vary, 
+#   we continue weight calculation to move out of local minima 
+    while(cost_diff != 0 and j<=n_iter):
+        j += 1
+        wts = wts + alpha*der_costfn(wts)/data.shape[0]               
+        cost_val = compute_cost(wts)
+#        print wts
+        if j % 500 ==1:
+#           Cost difference is computed every 500 iterations to check if minima is reached
+#           500 iterations are computed even if cost stops varying in other iterations to allow algo to move out of local minima
+            cost_diff = old_cost - cost_val
+            cost_diff = float("{0:.6f}".format(cost_diff))            
+            acc = entire_predict(wts)
+            print ("In iteration: %d - accuracy = %f " %(j,acc))
+            old_cost = cost_val 
+#            print "wts = ",wts
+    return(wts)
+
+def entire_predict(coeff):
+    l = []
+    count = 0
+    for j,i in enumerate(d):
+        y = 1/float(1+math.exp(-np.dot(coeff,i.T)))
+        y = 1 if y>=0.5 else -1
+        l2 = [y,data[j][4]]
+        l.append(l2)
+    out = np.array(l)
+    for i in out:
+        if i[0] == i[1]:
+            count +=1
+    accuracy = count/float(len(d))*100    
+    return(accuracy)
+
+f_path = raw_input('Enter file path : ')    
+data = np.genfromtxt(f_path,delimiter=',')
+
+# Delete column 4 as it is irrelevant for logit assignment
+#data = np.delete(data,3,1)
+data = np.delete(data,3,1)
+data = np.c_[ np.ones(data.shape[0]),data]
+print("Data read complete; Computing logit coefficients..")             
+d = data[:,0:4]  
+coeff = min_costfn1(7000,0.03) 
+print "\nWeight vector for logistic regression \n[W0            W1                W2            W3]\n",coeff
+acc = entire_predict(coeff)
+print "Final accuracy = %f"%acc
+#out = predict(coeff)
+#o1 = np.array(out)
+#np.savetxt("log_new.csv",o1, delimiter=",")
