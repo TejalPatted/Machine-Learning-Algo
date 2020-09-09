@@ -9,3 +9,4 @@ This repository contains implementations of machine learning algorithms. Most of
 6. Logistic regression - Mathematical implementation, implemenation of the model using scikit learn
 7. Dimensionality reduction techniques - OCA, Fastmap
 8. Artificial Neural Network - This model is built without using the Deep learning libraries like keras, Tensorflow or Theona. The model is capable of recognizing image classification
+9. KNN - This program implements knn for iris data using eucledian distance
